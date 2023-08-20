@@ -11,7 +11,7 @@ export const fields: Field[] = [
     id: "congregationTithe",
     breakdown: {
       nhqtrs: 0.64,
-      zhqtrs: 0.35
+      zhqtrs: 0.035
     },
   },
   {
