@@ -25,6 +25,11 @@ export function Analysis({ analysis }: { analysis: Analysis }) {
                 <span className="font-semibold border-b border-black">
                   {breakdown.total.toLocaleString()}
                 </span>
+                {breakdown.alias && (
+                  <span className="italic text-sm ml-2">
+                    ({breakdown.alias})
+                  </span>
+                )}
               </div>
             ))}
           </div>
