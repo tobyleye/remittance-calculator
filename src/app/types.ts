@@ -26,3 +26,12 @@ export type Field = {
     zhqtrs?: ShareValue;
   };
 };
+
+export type Analysis = {
+  analysis: any[];
+  totals: {
+    churchPlanting: number;
+    totalRemitted: number;
+    totalShares: any;
+  };
+};

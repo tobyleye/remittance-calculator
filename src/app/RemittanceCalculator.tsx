@@ -7,7 +7,15 @@ import { fields } from "./field";
 
 export function RemittanceCalculator() {
   const [totals, setTotals] = useState<string[]>(fields.map(() => ""));
-  const [analysis, setAnalysis] = useState<AnalysisSection[]>();
+  const [overallTotal, setOverallTotal] = useState("");
+  const [analysis, setAnalysis] = useState<{
+    analysis: any[];
+    totals: {
+      churchPlanting: number;
+      totalRemitted: number;
+      totalShares: any;
+    };
+  }>();
 
   const calculate = () => {
     let filled = fields.map((field, index) => {
@@ -69,7 +77,32 @@ export function RemittanceCalculator() {
       analysis.push(section);
     });
 
-    setAnalysis(analysis);
+    // calculate totals
+    let totalShares: Record<string, number> = {};
+
+    let totalRemitted = 0;
+
+    analysis.forEach((each) => {
+      let { breakdown } = each;
+      breakdown.forEach((share) => {
+        totalRemitted += share.total;
+        totalShares[share.label] =
+          (totalShares[share.label] ?? 0) + share.total;
+      });
+    });
+
+    let churchPlanting = 0.2 * (Number(overallTotal) - totalRemitted);
+
+    totalRemitted += churchPlanting;
+
+    setAnalysis({
+      analysis: analysis,
+      totals: {
+        totalRemitted,
+        churchPlanting,
+        totalShares,
+      },
+    });
   };
 
   useEffect(() => {}, []);
@@ -84,6 +117,16 @@ export function RemittanceCalculator() {
         <section className="w-full">
           <div className="text-xl px-8 lg:w-4/5 mx-auto">
             <div className="fields grid gap-4">
+              <div className="flex flex-col">
+                <label>Overall Total</label>
+                <input
+                  type="number"
+                  value={overallTotal}
+                  required
+                  onChange={(e) => setOverallTotal(e.target.value)}
+                  className=" appearance-none border border-green-500 h-12 rounded-md px-5 outline-none focus:outline-none"
+                />
+              </div>
               {fields.map((field, index) => (
                 <div key={field.id} className="flex flex-col gap-2">
                   <label className="font-medium">{field.label}</label>
@@ -124,7 +167,6 @@ export function RemittanceCalculator() {
               </button>
             </div>
             <div>
-              {" "}
               <Analysis analysis={analysis} />
             </div>
           </section>

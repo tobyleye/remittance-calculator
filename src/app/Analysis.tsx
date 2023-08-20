@@ -1,9 +1,8 @@
-import { AnalysisSection } from "./types";
-
-export function Analysis({ analysis }: { analysis: AnalysisSection[] }) {
+import { Analysis } from "./types";
+export function Analysis({ analysis }: { analysis: Analysis }) {
   return (
     <div>
-      {analysis.map((section) => (
+      {analysis.analysis.map((section) => (
         <section
           className="border-b border-gray-400 mb-4 py-2"
           key={section.label}
@@ -17,7 +16,7 @@ export function Analysis({ analysis }: { analysis: AnalysisSection[] }) {
                 {section.total.toLocaleString()}
               </span>
             </div>
-            {section.breakdown.map((breakdown, index) => (
+            {section.breakdown.map((breakdown: any, index: number) => (
               <div key={`${section.label}-breakdown-${index}`}>
                 <span className="font-normal">
                   {breakdown.label}({breakdown.percentage}%)
@@ -31,6 +30,42 @@ export function Analysis({ analysis }: { analysis: AnalysisSection[] }) {
           </div>
         </section>
       ))}
+
+      <div>
+        <h3 className="mb-4 font-bold">Total everyting</h3>
+
+        <div>
+          {Object.entries(analysis.totals).map(([key, value]) => {
+            if (key === "totalShares") {
+              return (
+                <div key={key}>
+                  {Object.entries(value).map(([share, shareValue]) => {
+                    return (
+                      <div className="flex " key={share}>
+                        <span className="mr-2">{share}:</span>
+                        <span>
+                          <Num num={shareValue as number} />{" "}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            } else {
+              return (
+                <div className="flex items-center gap-4" key={key}>
+                  {key}:
+                  <Num num={value} />
+                </div>
+              );
+            }
+          })}
+        </div>
+      </div>
     </div>
   );
 }
+
+const Num = ({ num }: { num: string | number }) => {
+  return <div className="font-medium">{Number(num).toLocaleString()}</div>;
+};
