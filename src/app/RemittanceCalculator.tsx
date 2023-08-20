@@ -6,7 +6,7 @@ import { Analysis } from "./Analysis";
 import { fields } from "./field";
 
 export function RemittanceCalculator() {
-  const [totals, setTotals] = useState<string[]>(fields.map((field) => field.value !== undefined ? field.value : ""));
+  const [totals, setTotals] = useState<string[]>(fields.map((field) => field.value !== undefined ? String(field.value) : ""));
   const [overallTotal, setOverallTotal] = useState("");
   const [analysis, setAnalysis] = useState<{
     analysis: any[];
