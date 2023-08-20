@@ -19,6 +19,7 @@ export type ShareValue =
 export type Field = {
   label: string;
   id: string;
+  value?: number;
   breakdown?: {
     nhqtrs?: ShareValue;
     ahqtrs?: ShareValue;
