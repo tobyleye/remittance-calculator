@@ -62,4 +62,20 @@ export const fields: Field[] = [
       nhqtrs: 0.5,
     },
   },
+    {
+    label: "RUN EDU FUND",
+    id: "runEduFund",
+    value: 1000,
+    breakdown: {
+      nhqtrs: 1,
+    },
+  },
+    {
+    label: "National CSR Fund",
+    id: "nationalCSRFund",
+    value: 1000,
+    breakdown: {
+      nhqtrs: 1,
+    },
+  },
 ];
