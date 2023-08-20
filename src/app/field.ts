@@ -11,6 +11,7 @@ export const fields: Field[] = [
     id: "congregationTithe",
     breakdown: {
       nhqtrs: 0.64,
+      zhqtrs: 0.35
     },
   },
   {
@@ -21,7 +22,7 @@ export const fields: Field[] = [
       phqtrs: 0.05,
       ahqtrs: 0.05,
       zhqtrs: {
-        value: 0.05,
+        value: 0.01,
         label: "1% Pastors seed forum",
       },
     },
