@@ -5,6 +5,11 @@ import { AnalysisSection } from "./types";
 import { Analysis } from "./Analysis";
 import { fields } from "./field";
 
+function round(value: number, precision:number = 0) {
+    let multiplier = Math.pow(10, precision || 0);
+    return Math.round(value * multiplier) / multiplier;
+}
+
 export function RemittanceCalculator() {
   const [totals, setTotals] = useState<string[]>(fields.map((field) => field.value !== undefined ? String(field.value) : ""));
   const [overallTotal, setOverallTotal] = useState("");
@@ -57,17 +62,18 @@ export function RemittanceCalculator() {
       ].forEach((share) => {
         let { value } = share;
         if (value !== undefined) {
+          
           if (typeof value === "object") {
             section.breakdown.push({
               label: share.label,
-              total: value.value * section.total,
+              total: round(value.value * section.total),
               alias: value.label,
               percentage: value.value * 100,
             });
           } else {
             section.breakdown.push({
               label: share.label,
-              total: value * section.total,
+              total: round(value * section.total),
               percentage: value * 100,
             });
           }
@@ -91,7 +97,7 @@ export function RemittanceCalculator() {
       });
     });
 
-    let churchPlanting = 0.2 * (Number(overallTotal) - totalRemitted);
+    let churchPlanting = round(0.2 * (Number(overallTotal) - totalRemitted));
 
     totalRemitted += churchPlanting;
 
