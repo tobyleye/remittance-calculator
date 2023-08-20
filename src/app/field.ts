@@ -30,7 +30,7 @@ export const fields: Field[] = [
     label: "Sunday love offering",
     id: "sundayLoveOffering",
     breakdown: {
-      nhqtrs: 0.1,
+      nhqtrs: 0.3,
       ahqtrs: 0.1,
     },
   },
@@ -38,7 +38,7 @@ export const fields: Field[] = [
     label: "Crm",
     id: "crm",
     breakdown: {
-      nhqtrs: 0.5,
+      nhqtrs: 0.75,
     },
   },
   {
