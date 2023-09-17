@@ -28,6 +28,16 @@ export type Field = {
   };
 };
 
+type who= 'nhqtrs' | 'ahqtrs' | 'phqtrs' | 
+  'zhqtrs'
+
+export type FieldV2 = {
+  label: string;
+  id: string;
+  value?: number;
+  breakdown: { who: who; value: number; description?: string }[];
+};
+
 export type Analysis = {
   analysis: any[];
   totals: {
