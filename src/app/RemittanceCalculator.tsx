@@ -4,14 +4,19 @@ import { useEffect, useState } from "react";
 import { AnalysisSection } from "./types";
 import { Analysis } from "./Analysis";
 import { fields } from "./field";
+import { NumberInput } from "./NumberInput";
 
-function round(value: number, precision:number = 0) {
-    let multiplier = Math.pow(10, precision || 0);
-    return Math.round(value * multiplier) / multiplier;
+function round(value: number, precision: number = 0) {
+  let multiplier = Math.pow(10, precision || 0);
+  return Math.round(value * multiplier) / multiplier;
 }
 
 export function RemittanceCalculator() {
-  const [totals, setTotals] = useState<string[]>(fields.map((field) => field.value !== undefined ? String(field.value) : ""));
+  const [totals, setTotals] = useState<string[]>(
+    fields.map((field) =>
+      field.value !== undefined ? String(field.value) : ""
+    )
+  );
   const [overallTotal, setOverallTotal] = useState("");
   const [analysis, setAnalysis] = useState<{
     analysis: any[];
@@ -40,44 +45,19 @@ export function RemittanceCalculator() {
         breakdown: [],
       };
 
-      let { nhqtrs, ahqtrs, phqtrs, zhqtrs } = field.breakdown ?? {};
+      let { breakdown = [] } = field;
+      breakdown.forEach((share) => {
+        let { value, description, beneficiary } = share;
+        if (value === undefined) return;
 
-      [
-        {
-          label: "NHQTRS",
-          value: nhqtrs,
-        },
-        {
-          label: "AHQTRS",
-          value: ahqtrs,
-        },
-        {
-          label: "PHQTRS",
-          value: phqtrs,
-        },
-        {
-          label: "ZHQTRS",
-          value: zhqtrs,
-        },
-      ].forEach((share) => {
-        let { value } = share;
-        if (value !== undefined) {
-          
-          if (typeof value === "object") {
-            section.breakdown.push({
-              label: share.label,
-              total: round(value.value * section.total),
-              alias: value.label,
-              percentage: value.value * 100,
-            });
-          } else {
-            section.breakdown.push({
-              label: share.label,
-              total: round(value * section.total),
-              percentage: value * 100,
-            });
-          }
-        }
+        let total = round(value * section.total);
+
+        section.breakdown.push({
+          beneficiary,
+          description,
+          total,
+          percentage: value * 100,
+        });
       });
 
       analysis.push(section);
@@ -92,8 +72,8 @@ export function RemittanceCalculator() {
       let { breakdown } = each;
       breakdown.forEach((share) => {
         totalRemitted += share.total;
-        totalShares[share.label] =
-          (totalShares[share.label] ?? 0) + share.total;
+        totalShares[share.beneficiary] =
+          (totalShares[share.beneficiary] ?? 0) + share.total;
       });
     });
 
@@ -122,44 +102,41 @@ export function RemittanceCalculator() {
       <div className="grid lg:grid-cols-2 relative">
         <section className="w-full">
           <div className="text-xl px-8 lg:w-4/5 mx-auto">
-            <div className="fields grid gap-4">
-              <div className="flex flex-col">
-                <label>Overall Total</label>
-                <input
-                  type="number"
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                calculate();
+              }}
+            >
+              <div className="fields grid gap-6">
+                <NumberInput
+                  label="Overall Total"
                   value={overallTotal}
+                  onChange={setOverallTotal}
                   required
-                  onChange={(e) => setOverallTotal(e.target.value)}
-                  className=" appearance-none border border-green-500 h-12 rounded-md px-5 outline-none focus:outline-none"
                 />
+
+                {fields.map((field, index) => (
+                  <div key={field.id}>
+                    <NumberInput
+                      label={field.label}
+                      value={totals[index]}
+                      onChange={(value) => {
+                        let newTotals = [...totals];
+                        newTotals[index] = value ? value : "";
+                        setTotals(newTotals);
+                      }}
+                    />
+                  </div>
+                ))}
               </div>
-              {fields.map((field, index) => (
-                <div key={field.id} className="flex flex-col gap-2">
-                  <label className="font-medium">{field.label}</label>
-                  <input
-                    type="number"
-                    className=" appearance-none border border-green-500 h-12 rounded-md px-5 outline-none focus:outline-none"
-                    value={totals[index]}
-                    onChange={(e) => {
-                      let value = e.target.value;
-                      let newTotals = [...totals];
-                      newTotals[index] = value ? value : "";
 
-                      setTotals(newTotals);
-                    }}
-                  />
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-8">
-              <button
-                onClick={calculate}
-                className="bg-green-500 text-xl h-16 px-20 rounded-md text-white capitalize font-medium transition-colors hover:bg-green-400"
-              >
-                submit
-              </button>
-            </div>
+              <div className="mt-8">
+                <button className="bg-green-500 text-xl h-16 px-20 rounded-md text-white capitalize font-medium transition-colors hover:bg-green-400">
+                  submit
+                </button>
+              </div>
+            </form>
           </div>
         </section>
         {analysis && (

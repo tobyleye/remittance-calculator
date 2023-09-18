@@ -18,14 +18,14 @@ export function Analysis({ analysis }: { analysis: Analysis }) {
             </div>
             {section.breakdown.map((breakdown: any, index: number) => (
               <div key={`${section.label}-breakdown-${index}`}>
-                <span className="font-normal">
-                  {breakdown.label}({breakdown.percentage}%)
+                <span className="font-normal uppercase">
+                  {breakdown.beneficiary}({breakdown.percentage}%)
                 </span>
                 -{" "}
                 <span className="font-semibold border-b border-black">
                   {breakdown.total.toLocaleString()}
                 </span>
-                {breakdown.alias && (
+                {breakdown.description && (
                   <span className="italic text-sm ml-2">
                     ({breakdown.alias})
                   </span>
