@@ -27,7 +27,7 @@ export function Analysis({ analysis }: { analysis: Analysis }) {
                 </span>
                 {breakdown.description && (
                   <span className="italic text-sm ml-2">
-                    ({breakdown.alias})
+                    ({breakdown.description})
                   </span>
                 )}
               </div>
