@@ -111,7 +111,7 @@ export const fields: Field[] = [
   {
     label: "National CSR Fund",
     id: "nationalCSRFund",
-    value: 1000,
+    value: 500,
     breakdown: [
       {
         beneficiary: Beneficiary.nhqtrs,
