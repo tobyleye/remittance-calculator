@@ -4,7 +4,7 @@ export const fields: Field[] = [
   {
     label: "Ministers Tithe",
     id: "membersTithe",
-    breakdown: [{ beneficiary: Beneficiary.nhqtrs, value: 0.64 }],
+    breakdown: [{ beneficiary: Beneficiary.nhqtrs, value: 0.63}],
   },
   {
     label: "Congregation Tithe",
@@ -12,7 +12,7 @@ export const fields: Field[] = [
     breakdown: [
       {
         beneficiary: Beneficiary.nhqtrs,
-        value: 0.64,
+        value: 0.58,
       },
       {
         beneficiary: Beneficiary.zhqtrs,
@@ -63,7 +63,7 @@ export const fields: Field[] = [
     breakdown: [
       {
         beneficiary: Beneficiary.nhqtrs,
-        value: 0.75,
+        value: 0.6,
       },
     ],
   },
