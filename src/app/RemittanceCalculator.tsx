@@ -11,6 +11,48 @@ function round(value: number, precision: number = 0) {
   return Math.round(value * multiplier) / multiplier;
 }
 
+type Rates = {
+  breakdowns: Record<string, number[]>;
+  churchPlanting: number;
+};
+
+const storageKey = "remittance-rates";
+const defaultRates: Rates = {
+  breakdowns: Object.fromEntries(
+    fields.map((field) => [
+      field.id,
+      field.breakdown.map((share) => round(share.value * 100, 4)),
+    ])
+  ),
+  churchPlanting: 20,
+};
+
+function isPercentage(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 100;
+}
+
+function readRates(): Rates {
+  try {
+    const stored = JSON.parse(localStorage.getItem(storageKey) || "null");
+    return {
+      breakdowns: Object.fromEntries(
+        fields.map((field) => [
+          field.id,
+          field.breakdown.map((_, index) => {
+            const value = stored?.breakdowns?.[field.id]?.[index];
+            return isPercentage(value) ? value : defaultRates.breakdowns[field.id][index];
+          }),
+        ])
+      ),
+      churchPlanting: isPercentage(stored?.churchPlanting)
+        ? stored.churchPlanting
+        : defaultRates.churchPlanting,
+    };
+  } catch {
+    return defaultRates;
+  }
+}
+
 export function RemittanceCalculator() {
   const [totals, setTotals] = useState<string[]>(
     fields.map((field) =>
@@ -18,6 +60,9 @@ export function RemittanceCalculator() {
     )
   );
   const [overallTotal, setOverallTotal] = useState("");
+  const [rates, setRates] = useState<Rates>(defaultRates);
+  const [draftRates, setDraftRates] = useState<Rates>(defaultRates);
+  const [rateMessage, setRateMessage] = useState("");
   const [analysis, setAnalysis] = useState<{
     analysis: any[];
     totals: {
@@ -46,17 +91,17 @@ export function RemittanceCalculator() {
       };
 
       let { breakdown = [] } = field;
-      breakdown.forEach((share) => {
-        let { value, description, beneficiary } = share;
-        if (value === undefined) return;
-
+      breakdown.forEach((share, index) => {
+        let { description, beneficiary } = share;
+        const percentage = rates.breakdowns[field.id][index];
+        const value = percentage / 100;
         let total = round(value * section.total);
 
         section.breakdown.push({
           beneficiary,
           description,
           total,
-          percentage: value * 100,
+          percentage,
         });
       });
 
@@ -77,7 +122,7 @@ export function RemittanceCalculator() {
       });
     });
 
-    let churchPlanting = round(0.2 * (Number(overallTotal) - totalRemitted));
+    let churchPlanting = round((rates.churchPlanting / 100) * (Number(overallTotal) - totalRemitted));
 
     totalRemitted += churchPlanting;
 
@@ -91,7 +136,11 @@ export function RemittanceCalculator() {
     });
   };
 
-  useEffect(() => {}, []);
+  useEffect(() => {
+    const savedRates = readRates();
+    setRates(savedRates);
+    setDraftRates(savedRates);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -102,6 +151,99 @@ export function RemittanceCalculator() {
       <div className="grid lg:grid-cols-2 relative">
         <section className="w-full">
           <div className="text-xl px-8 lg:w-4/5 mx-auto">
+            <details className="mb-8">
+              <summary className="cursor-pointer font-medium">Set remittance percentages</summary>
+              <form
+                className="mt-4"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (
+                    !isPercentage(draftRates.churchPlanting) ||
+                    !fields.every((field) => draftRates.breakdowns[field.id].every(isPercentage))
+                  ) {
+                    setRateMessage("Enter percentages between 0 and 100.");
+                    return;
+                  }
+                  try {
+                    localStorage.setItem(storageKey, JSON.stringify(draftRates));
+                    setRates(draftRates);
+                    setAnalysis(undefined);
+                    setRateMessage("Percentages saved on this device.");
+                  } catch {
+                    setRateMessage("Could not save percentages on this device.");
+                  }
+                }}
+              >
+                {fields.map((field) => (
+                  <fieldset key={field.id} className="mb-4">
+                    <legend className="font-medium">{field.label}</legend>
+                    {field.breakdown.map((share, index) => (
+                      <label key={index} className="flex items-center justify-between gap-4 text-base mt-2">
+                        <span className="uppercase">
+                          {share.beneficiary}{share.description ? ` — ${share.description}` : ""}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="any"
+                            required
+                            className="border border-green-500 rounded-md w-24 px-2 py-1"
+                            value={Number.isNaN(draftRates.breakdowns[field.id][index]) ? "" : draftRates.breakdowns[field.id][index]}
+                            onChange={(e) => {
+                              const value = e.target.valueAsNumber;
+                              setDraftRates((current) => ({
+                                ...current,
+                                breakdowns: {
+                                  ...current.breakdowns,
+                                  [field.id]: current.breakdowns[field.id].map((rate, i) =>
+                                    i === index ? value : rate
+                                  ),
+                                },
+                              }));
+                              setRateMessage("");
+                            }}
+                          />
+                          %
+                        </span>
+                      </label>
+                    ))}
+                  </fieldset>
+                ))}
+                <label className="flex items-center justify-between gap-4 text-base mb-4">
+                  Church planting
+                  <span className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="any"
+                      required
+                      className="border border-green-500 rounded-md w-24 px-2 py-1"
+                      value={Number.isNaN(draftRates.churchPlanting) ? "" : draftRates.churchPlanting}
+                      onChange={(e) => {
+                        setDraftRates((current) => ({ ...current, churchPlanting: e.target.valueAsNumber }));
+                        setRateMessage("");
+                      }}
+                    />
+                    %
+                  </span>
+                </label>
+                <div className="flex flex-wrap gap-3 text-base">
+                  <button type="submit" className="bg-green-500 px-4 py-2 rounded-md text-white hover:bg-green-400">
+                    Save percentages
+                  </button>
+                  <button type="button" className="border border-green-500 px-4 py-2 rounded-md" onClick={() => {
+                    setDraftRates(defaultRates);
+                    setRateMessage("Default percentages restored. Save to apply them.");
+                  }}>
+                    Restore defaults
+                  </button>
+                </div>
+                {rateMessage && <p role="status" className="text-base mt-2">{rateMessage}</p>}
+              </form>
+            </details>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
