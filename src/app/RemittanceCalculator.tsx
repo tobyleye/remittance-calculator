@@ -16,6 +16,11 @@ type Rates = {
   churchPlanting: number;
 };
 
+type RateDraft = {
+  breakdowns: Record<string, string[]>;
+  churchPlanting: string;
+};
+
 const storageKey = "remittance-rates";
 const defaultRates: Rates = {
   breakdowns: Object.fromEntries(
@@ -29,6 +34,15 @@ const defaultRates: Rates = {
 
 function isPercentage(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 100;
+}
+
+function toDraft(rates: Rates): RateDraft {
+  return {
+    breakdowns: Object.fromEntries(
+      Object.entries(rates.breakdowns).map(([id, values]) => [id, values.map(String)])
+    ),
+    churchPlanting: String(rates.churchPlanting),
+  };
 }
 
 function readRates(): Rates {
@@ -61,7 +75,7 @@ export function RemittanceCalculator() {
   );
   const [overallTotal, setOverallTotal] = useState("");
   const [rates, setRates] = useState<Rates>(defaultRates);
-  const [draftRates, setDraftRates] = useState<Rates>(defaultRates);
+  const [draftRates, setDraftRates] = useState<RateDraft>(() => toDraft(defaultRates));
   const [rateMessage, setRateMessage] = useState("");
   const [analysis, setAnalysis] = useState<{
     analysis: any[];
@@ -139,7 +153,7 @@ export function RemittanceCalculator() {
   useEffect(() => {
     const savedRates = readRates();
     setRates(savedRates);
-    setDraftRates(savedRates);
+    setDraftRates(toDraft(savedRates));
   }, []);
 
   return (
@@ -157,16 +171,29 @@ export function RemittanceCalculator() {
                 className="mt-4"
                 onSubmit={(e) => {
                   e.preventDefault();
+                  const newRates: Rates = {
+                    breakdowns: Object.fromEntries(
+                      fields.map((field) => [
+                        field.id,
+                        draftRates.breakdowns[field.id].map((value) =>
+                          value.trim() === "" ? NaN : Number(value)
+                        ),
+                      ])
+                    ),
+                    churchPlanting: draftRates.churchPlanting.trim() === ""
+                      ? NaN
+                      : Number(draftRates.churchPlanting),
+                  };
                   if (
-                    !isPercentage(draftRates.churchPlanting) ||
-                    !fields.every((field) => draftRates.breakdowns[field.id].every(isPercentage))
+                    !isPercentage(newRates.churchPlanting) ||
+                    !fields.every((field) => newRates.breakdowns[field.id].every(isPercentage))
                   ) {
                     setRateMessage("Enter percentages between 0 and 100.");
                     return;
                   }
                   try {
-                    localStorage.setItem(storageKey, JSON.stringify(draftRates));
-                    setRates(draftRates);
+                    localStorage.setItem(storageKey, JSON.stringify(newRates));
+                    setRates(newRates);
                     setAnalysis(undefined);
                     setRateMessage("Percentages saved on this device.");
                   } catch {
@@ -190,9 +217,9 @@ export function RemittanceCalculator() {
                             step="any"
                             required
                             className="border border-green-500 rounded-md w-24 px-2 py-1"
-                            value={Number.isNaN(draftRates.breakdowns[field.id][index]) ? "" : draftRates.breakdowns[field.id][index]}
+                            value={draftRates.breakdowns[field.id][index]}
                             onChange={(e) => {
-                              const value = e.target.valueAsNumber;
+                              const value = e.target.value;
                               setDraftRates((current) => ({
                                 ...current,
                                 breakdowns: {
@@ -221,9 +248,10 @@ export function RemittanceCalculator() {
                       step="any"
                       required
                       className="border border-green-500 rounded-md w-24 px-2 py-1"
-                      value={Number.isNaN(draftRates.churchPlanting) ? "" : draftRates.churchPlanting}
+                      value={draftRates.churchPlanting}
                       onChange={(e) => {
-                        setDraftRates((current) => ({ ...current, churchPlanting: e.target.valueAsNumber }));
+                        const value = e.target.value;
+                        setDraftRates((current) => ({ ...current, churchPlanting: value }));
                         setRateMessage("");
                       }}
                     />
@@ -235,7 +263,7 @@ export function RemittanceCalculator() {
                     Save percentages
                   </button>
                   <button type="button" className="border border-green-500 px-4 py-2 rounded-md" onClick={() => {
-                    setDraftRates(defaultRates);
+                    setDraftRates(toDraft(defaultRates));
                     setRateMessage("Default percentages restored. Save to apply them.");
                   }}>
                     Restore defaults
